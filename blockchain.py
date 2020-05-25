@@ -52,9 +52,9 @@ while True:
     elif user_choice == '2':
         print_blockchain_elements()
     elif user_choice == 'q':
-        break
+        continue
     else:
         print('Input was invalid, please pick a value from the list!')
-
+    print('Choice registered!')
 
 print('Done!')
