@@ -1,12 +1,16 @@
 # Initializing blockchain list
 genesis_block = {
-    'previous_hash_key': '',
+    'previous_hash': '',
     'index': 0,
     'transaction': []
 }
 blockchain = [genesis_block]
 open_transactions = []
-owner = 'John'
+owner = 'John Doe'
+
+
+def hash_block(block):
+    return '-'.join([str(block[key]) for key in block])
 
 
 def get_last_blockchain_value():
@@ -34,10 +38,9 @@ def add_transaction(recipient, sender=owner,  amount=1.0):
 
 def mine_block():
     last_block = blockchain[-1]
-    hashed_block = '-'.join([str(last_block[key]) for key in last_block])
-    print(hashed_block)
+    hashed_block = hash_block(last_block)
     block = {
-        'previous_hash_key': hashed_block,
+        'previous_hash': hashed_block,
         'index': len(blockchain),
         'transaction': open_transactions
     }
@@ -69,20 +72,18 @@ def print_blockchain_elements():
 
 
 def verify_chain():
-    # block_index = 0
-    is_valid = True
-    for block_index in range(len(blockchain)):
-        if block_index == 0:
+    """ Verify the current blockchain and return True if valid, False otherwise """
+    for (index, block) in enumerate(blockchain):
+        if index == 0:
             continue
-        elif blockchain[block_index][0] == blockchain[block_index - 1]:
-            is_valid = True
-        else:
-            is_valid = False
-    return is_valid
+        if block['previous_hash'] != hash_block(blockchain[index - 1]):
+            return False
+    return True
 
 
 waiting_for_input = True
 
+# A while loop for the user input interface
 while waiting_for_input:
     print('Please choose')
     print('1: Add a new transaction value')
@@ -104,11 +105,25 @@ while waiting_for_input:
     elif user_choice == 'h':
         # Make sure that its impossible to "hack" the blockchain if its empty
         if len(blockchain) >= 1:
-            blockchain[0] = [2]
+            blockchain[0] = {
+                'previous_hash': '',
+                'index': 0,
+                'transaction': [
+                    {
+                        'sender': 'Jane Doe',
+                        'recipient': 'John Doe',
+                        'amount': 100
+                    }
+                ]
+            }
     elif user_choice == 'q':
         waiting_for_input = False
     else:
         print('Input was invalid, please pick a value from the list!')
+    if not verify_chain():
+        print_blockchain_elements()
+        print('Invalid blockchain')
+        break
     print('Choice registered!')
 else:
     print('User left!')
