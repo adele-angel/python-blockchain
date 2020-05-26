@@ -1,17 +1,52 @@
-# Initializing blockchain list
+# Starting block for the blockchain
 genesis_block = {
     'previous_hash': '',
     'index': 0,
-    'transaction': []
+    'transactions': []
 }
+# Initializing blockchain list
 blockchain = [genesis_block]
+# Unhandled transactions
 open_transactions = []
+# The owner of this blockchain node, hence an identifier (e.g. for sending coins)
 owner = 'John Doe'
+# Registered participants: owner + other people sending/ receiving coins
 participants = set({'John Doe'})
 
 
 def hash_block(block):
+    """ Hashes a block and returns a string representation of it.
+
+    Arguments:
+        :block: The block that should be hashed.
+    """
     return '-'.join([str(block[key]) for key in block])
+
+
+def get_balance(participant):
+    """ Calculate and return the balance for a participant.
+
+    Arguments:
+        :participant: The person for whom to calculate the balance.
+    """
+    # Fetch a list of all sent coin amounts for the given person (empty lists are returned if the person was NOT the sender)
+    # This fetches sent amounts of transactions that were already included in blocks of the blockchain
+    tx_sender = [[tx['amount'] for tx in block['transactions']
+                  if tx['sender'] == participant] for block in blockchain]
+    amount_sent = 0
+    for tx in tx_sender:
+        if len(tx) > 0:
+            amount_sent += tx[0]
+    # This fetches received coin amounts of transactions that were already included in blocks of the blockchain
+    # Open transactions are ignored here because user shouldn't be able to spend coins before the transaction was confirmed + included in a block
+    tx_recipient = [[tx['amount'] for tx in block['transactions']
+                     if tx['recipient'] == participant] for block in blockchain]
+    amount_received = 0
+    for tx in tx_recipient:
+        if len(tx) > 0:
+            amount_received += tx[0]
+    # Return the total balance
+    return amount_received - amount_sent
 
 
 def get_last_blockchain_value():
@@ -19,6 +54,10 @@ def get_last_blockchain_value():
     if len(blockchain) < 1:
         return None
     return blockchain[-1]
+
+# This function accepts two arguments.
+# One required one (transaction_amount) and one optional one (last_transaction)
+# The optional one is optional because it has a default value => [1]
 
 
 def add_transaction(recipient, sender=owner,  amount=1.0):
@@ -40,14 +79,18 @@ def add_transaction(recipient, sender=owner,  amount=1.0):
 
 
 def mine_block():
+    """ Create a new block and add open transactions to it. """
+    # Fetch the currently last block of the blockchain
     last_block = blockchain[-1]
+    # Hash the last block (=> to be able to compare it to the stored hash value)
     hashed_block = hash_block(last_block)
     block = {
         'previous_hash': hashed_block,
         'index': len(blockchain),
-        'transaction': open_transactions
+        'transactions': open_transactions
     }
     blockchain.append(block)
+    return True
 
 
 def get_transaction_value():
@@ -55,17 +98,17 @@ def get_transaction_value():
     # Get user input, transform it from a string to a float and store it
     tx_recipient = input('Enter the recipient of the transaction: ')
     tx_amount = float(input('Your transaction amount please: '))
-    # tuple, (tx_recipient, tx_amount)
-    # if tuple has more then 1 element, brackets can be omitted
     return tx_recipient, tx_amount
 
 
 def get_user_choice():
+    """ Prompts the user for its choice and return it. """
     user_input = input('Your choice: ')
     return user_input
 
 
 def print_blockchain_elements():
+    """ Output all blocks of the blockchain. """
     # Output the blockchain list to console
     for block in blockchain:
         print('Outputting block')
@@ -98,12 +141,13 @@ while waiting_for_input:
     user_choice = get_user_choice()
     if user_choice == '1':
         tx_data = get_transaction_value()
-        recipient, amount = tx_data  # Unpacking tuple
+        recipient, amount = tx_data
         # Add the transaction amount to the blockchain
         add_transaction(recipient, amount=amount)
         print(open_transactions)
     elif user_choice == '2':
-        mine_block()
+        if mine_block():
+            open_transactions = []
     elif user_choice == '3':
         print_blockchain_elements()
     elif user_choice == '4':
@@ -114,7 +158,7 @@ while waiting_for_input:
             blockchain[0] = {
                 'previous_hash': '',
                 'index': 0,
-                'transaction': [
+                'transactions': [
                     {
                         'sender': 'Jane Doe',
                         'recipient': 'John Doe',
@@ -123,6 +167,7 @@ while waiting_for_input:
                 ]
             }
     elif user_choice == 'q':
+        # This will lead to the loop to exist because it's running condition becomes False
         waiting_for_input = False
     else:
         print('Input was invalid, please pick a value from the list!')
@@ -130,7 +175,7 @@ while waiting_for_input:
         print_blockchain_elements()
         print('Invalid blockchain')
         break
-    print('Choice registered!')
+    print(get_balance('John Doe'))
 else:
     print('User left!')
 
