@@ -36,6 +36,9 @@ def get_balance(participant):
     # This fetches sent amounts of transactions that were already included in blocks of the blockchain
     tx_sender = [[tx['amount'] for tx in block['transactions']
                   if tx['sender'] == participant] for block in blockchain]
+    open_tx_sender = [tx['amount']
+                      for tx in open_transactions if tx['sender'] == participant]
+    tx_sender.append(open_tx_sender)
     amount_sent = 0
     for tx in tx_sender:
         if len(tx) > 0:
@@ -58,6 +61,16 @@ def get_last_blockchain_value():
         return None
     return blockchain[-1]
 
+
+def verify_transaction(transaction):
+    """ Verify a transaction by checking whether the sender has sufficient coins.
+
+    Arguments:
+        :transaction: The transaction that should be verified.
+    """
+    sender_balance = get_balance(transaction['sender'])
+    return sender_balance >= transaction['amount']
+
 # This function accepts two arguments.
 # One required one (transaction_amount) and one optional one (last_transaction)
 # The optional one is optional because it has a default value => [1]
@@ -76,9 +89,12 @@ def add_transaction(recipient, sender=owner,  amount=1.0):
         'recipient': recipient,
         'amount': amount
     }
-    open_transactions.append(transaction)
-    participants.add(sender)
-    participants.add(recipient)
+    if verify_transaction(transaction):
+        open_transactions.append(transaction)
+        participants.add(sender)
+        participants.add(recipient)
+        return True
+    return False
 
 
 def mine_block():
@@ -153,7 +169,10 @@ while waiting_for_input:
         tx_data = get_transaction_value()
         recipient, amount = tx_data
         # Add the transaction amount to the blockchain
-        add_transaction(recipient, amount=amount)
+        if add_transaction(recipient, amount=amount):
+            print('Added transaction!')
+        else:
+            print('Transaction failed!')
         print(open_transactions)
     elif user_choice == '2':
         if mine_block():
