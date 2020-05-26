@@ -1,3 +1,6 @@
+# The reward given to miners (for creating a new block)
+MINING_REWARD = 10
+
 # Starting block for the blockchain
 genesis_block = {
     'previous_hash': '',
@@ -84,6 +87,13 @@ def mine_block():
     last_block = blockchain[-1]
     # Hash the last block (=> to be able to compare it to the stored hash value)
     hashed_block = hash_block(last_block)
+    # Miners should be rewarded
+    reward_transaction = {
+        'sender': 'MINING',
+        'recipient': owner,
+        'amount': MINING_REWARD
+    }
+    open_transactions.append(reward_transaction)
     block = {
         'previous_hash': hashed_block,
         'index': len(blockchain),
