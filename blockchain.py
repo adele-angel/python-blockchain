@@ -109,11 +109,14 @@ def mine_block():
         'recipient': owner,
         'amount': MINING_REWARD
     }
-    open_transactions.append(reward_transaction)
+    # Copy transaction instead of manipulating the original open_transactions list
+    # This ensures that if for some reason the mining should fail, the reward transaction stored in the open transactions
+    copied_transaction = open_transactions[:]
+    copied_transaction.append(reward_transaction)
     block = {
         'previous_hash': hashed_block,
         'index': len(blockchain),
-        'transactions': open_transactions
+        'transactions': copied_transaction
     }
     blockchain.append(block)
     return True
