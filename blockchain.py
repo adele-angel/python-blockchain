@@ -9,16 +9,8 @@ from hash_util import hash_string_265, hash_block
 
 # The reward given to miners (for creating a new block)
 MINING_REWARD = 10
-
-# Starting block for the blockchain
-genesis_block = {
-    'previous_hash': '',
-    'index': 0,
-    'transactions': [],
-    'proof': 100
-}
 # Initializing blockchain list
-blockchain = [genesis_block]
+blockchain = []
 # Unhandled transactions
 open_transactions = []
 # The owner of this blockchain node, hence an identifier (e.g. for sending coins)
@@ -29,11 +21,11 @@ participants = {'John Doe'}
 
 def load_data():
     """ Initialize blockchain + open transactions data from a file. """
+    global blockchain
+    global open_transactions
     try:
         with open('blockchain.txt', mode='r') as f:
             file_content = f.readlines()
-            global blockchain
-            global open_transactions
             blockchain = json.loads(file_content[0][:-1])
             # Converting the loaded data because transactions should use OrderedDict
             updated_blockchain = []
@@ -56,11 +48,17 @@ def load_data():
                 updated_transactions.append(updated_transaction)
             open_transactions = updated_transactions
     except IOError:
-        print('File not found!')
-    except ValueError:
-        print('Value error!')
-    except:
-        print('Wildcard!')
+        # Starting block for the blockchain
+        genesis_block = {
+            'previous_hash': '',
+            'index': 0,
+            'transactions': [],
+            'proof': 100
+        }
+        # Initializing blockchain list
+        blockchain = [genesis_block]
+        # Unhandled transactions
+        open_transactions = []
     finally:
         print('Cleanup!')
 
@@ -70,10 +68,13 @@ load_data()
 
 def save_data():
     """ Save blockchain + open transactions snapshot to a file. """
-    with open('blockchain.txt', mode='w') as f:
-        f.write(json.dumps(blockchain))
-        f.write('\n')
-        f.write(json.dumps(open_transactions))
+    try:
+        with open('blockchain.txt', mode='w') as f:
+            f.write(json.dumps(blockchain))
+            f.write('\n')
+            f.write(json.dumps(open_transactions))
+    except IOError:
+        print('Saving failed!')
 
 
 def valid_proof(transactions, last_hash, proof):
