@@ -29,30 +29,40 @@ participants = {'John Doe'}
 
 def load_data():
     """ Initialize blockchain + open transactions data from a file. """
-    with open('blockchain.txt', mode='r') as f:
-        file_content = f.readlines()
-        global blockchain
-        global open_transactions
-        blockchain = json.loads(file_content[0][:-1])
-        updated_blockchain = []
-        for block in blockchain:
-            updated_block = {
-                'previous_hash': block['previous_hash'],
-                'index': block['index'],
-                'proof': block['proof'],
-                'transactions': [OrderedDict(
-                    [('sender', tx['sender']), ('recipient', tx['recipient']), ('amount', tx['amount'])]) for tx in block['transactions']]
-            }
-            updated_blockchain.append(updated_block)
-        blockchain = updated_blockchain
-        open_transactions = json.loads(file_content[1])
-        # Converting the loaded data because transactions should use OrderedDict
-        updated_transactions = []
-        for tx in open_transactions:
-            updated_transaction = OrderedDict(
-                [('sender', tx['sender']), ('recipient', tx['recipient']), ('amount', tx['amount'])])
-            updated_transactions.append(updated_transaction)
-        open_transactions = updated_transactions
+    try:
+        with open('blockchain.txt', mode='r') as f:
+            file_content = f.readlines()
+            global blockchain
+            global open_transactions
+            blockchain = json.loads(file_content[0][:-1])
+            # Converting the loaded data because transactions should use OrderedDict
+            updated_blockchain = []
+            for block in blockchain:
+                updated_block = {
+                    'previous_hash': block['previous_hash'],
+                    'index': block['index'],
+                    'proof': block['proof'],
+                    'transactions': [OrderedDict(
+                        [('sender', tx['sender']), ('recipient', tx['recipient']), ('amount', tx['amount'])]) for tx in block['transactions']]
+                }
+                updated_blockchain.append(updated_block)
+            blockchain = updated_blockchain
+            open_transactions = json.loads(file_content[1])
+            # Converting the loaded data because transactions should use OrderedDict
+            updated_transactions = []
+            for tx in open_transactions:
+                updated_transaction = OrderedDict(
+                    [('sender', tx['sender']), ('recipient', tx['recipient']), ('amount', tx['amount'])])
+                updated_transactions.append(updated_transaction)
+            open_transactions = updated_transactions
+    except IOError:
+        print('File not found!')
+    except ValueError:
+        print('Value error!')
+    except:
+        print('Wildcard!')
+    finally:
+        print('Cleanup!')
 
 
 load_data()
@@ -76,11 +86,9 @@ def valid_proof(transactions, last_hash, proof):
     """
     # Create a string with all the hash inputs
     guess = (str(transactions) + str(last_hash) + str(proof)).encode()
-    print(guess)
     # Hash the string
     # IMPORTANT: This is NOT the same hash as will be stored in the previous_hash. It's a not a block's hash. It's only used for the proof-of-work algorithm.
     guess_hash = hash_string_265(guess)
-    print(guess_hash)
     # Only a hash (which is based on the above inputs) which starts with two 0s is treated as valid
     return guess_hash[0:2] == '00'
 
