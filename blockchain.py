@@ -1,8 +1,10 @@
 # Imported standard Python libraries
 from functools import reduce
 import hashlib as hl
-import json
 from collections import OrderedDict
+
+# Imported files
+from hash_util import hash_string_265, hash_block
 
 # The reward given to miners (for creating a new block)
 MINING_REWARD = 10
@@ -24,16 +26,6 @@ owner = 'John Doe'
 participants = {'John Doe'}
 
 
-def hash_block(block):
-    """ Hashes a block and returns a string representation of it.
-
-    Arguments:
-        :block: The block that should be hashed.
-    """
-    # Create a 64 character hash
-    return hl.sha256(json.dumps(block, sort_keys=True).encode()).hexdigest()
-
-
 def valid_proof(transactions, last_hash, proof):
     """ Validate a proof of work number and see if it solves the puzzle algorithm (two leading 0s).
 
@@ -46,7 +38,7 @@ def valid_proof(transactions, last_hash, proof):
     guess = (str(transactions) + str(last_hash) + str(proof)).encode()
     # Hash the string
     # IMPORTANT: This is NOT the same hash as will be stored in the previous_hash. It's a not a block's hash. It's only used for the proof-of-work algorithm.
-    guess_hash = hl.sha256(guess).hexdigest()
+    guess_hash = hash_string_265(guess)
     print(guess_hash)
     # Only a hash (which is based on the above inputs) which starts with two 0s is treated as valid
     return guess_hash[0:2] == '00'
