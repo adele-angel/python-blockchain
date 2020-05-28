@@ -1,3 +1,5 @@
+import functools
+
 # The reward given to miners (for creating a new block)
 MINING_REWARD = 10
 
@@ -14,7 +16,7 @@ open_transactions = []
 # The owner of this blockchain node, hence an identifier (e.g. for sending coins)
 owner = 'John Doe'
 # Registered participants: owner + other people sending/ receiving coins
-participants = set({'John Doe'})
+participants = {'John Doe'}
 
 
 def hash_block(block):
@@ -39,18 +41,18 @@ def get_balance(participant):
     open_tx_sender = [tx['amount']
                       for tx in open_transactions if tx['sender'] == participant]
     tx_sender.append(open_tx_sender)
-    amount_sent = 0
-    for tx in tx_sender:
-        if len(tx) > 0:
-            amount_sent += tx[0]
+    # Calculate the total amount of coins sent
+    amount_sent = functools.reduce(
+        lambda tx_sum, tx_amt: tx_sum + tx_amt[0] if len(tx_amt) > 0 else 0,
+        tx_sender, 0)
     # This fetches received coin amounts of transactions that were already included in blocks of the blockchain
     # Open transactions are ignored here because user shouldn't be able to spend coins before the transaction was confirmed + included in a block
     tx_recipient = [[tx['amount'] for tx in block['transactions']
                      if tx['recipient'] == participant] for block in blockchain]
-    amount_received = 0
-    for tx in tx_recipient:
-        if len(tx) > 0:
-            amount_received += tx[0]
+    # Calculate the total amount of coins received
+    amount_received = functools.reduce(
+        lambda tx_sum, tx_amt: tx_sum + tx_amt[0] if len(tx_amt) > 0 else 0,
+        tx_recipient, 0)
     # Return the total balance
     return amount_received - amount_sent
 
@@ -203,7 +205,7 @@ while waiting_for_input:
                 'index': 0,
                 'transactions': [
                     {
-                        'sender': 'Jane Doe',
+                        'sender': 'Donald Duck',
                         'recipient': 'John Doe',
                         'amount': 100
                     }
