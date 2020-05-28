@@ -3,7 +3,6 @@ from functools import reduce
 import hashlib as hl
 from collections import OrderedDict
 import json
-import pickle
 
 # Imported functions from hash_util.py file
 from hash_util import hash_string_265, hash_block
