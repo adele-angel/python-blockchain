@@ -2,8 +2,9 @@
 from functools import reduce
 import hashlib as hl
 from collections import OrderedDict
+import json
 
-# Imported files
+# Imported functions from hash_util.py file
 from hash_util import hash_string_265, hash_block
 
 # The reward given to miners (for creating a new block)
@@ -27,22 +28,42 @@ participants = {'John Doe'}
 
 
 def load_data():
+    """ Initialize blockchain + open transactions data from a file. """
     with open('blockchain.txt', mode='r') as f:
         file_content = f.readlines()
         global blockchain
         global open_transactions
-        blockchain = file_content[0]
-        open_transactions = file_content[1]
+        blockchain = json.loads(file_content[0][:-1])
+        updated_blockchain = []
+        for block in blockchain:
+            updated_block = {
+                'previous_hash': block['previous_hash'],
+                'index': block['index'],
+                'proof': block['proof'],
+                'transactions': [OrderedDict(
+                    [('sender', tx['sender']), ('recipient', tx['recipient']), ('amount', tx['amount'])]) for tx in block['transactions']]
+            }
+            updated_blockchain.append(updated_block)
+        blockchain = updated_blockchain
+        open_transactions = json.loads(file_content[1])
+        # Converting the loaded data because transactions should use OrderedDict
+        updated_transactions = []
+        for tx in open_transactions:
+            updated_transaction = OrderedDict(
+                [('sender', tx['sender']), ('recipient', tx['recipient']), ('amount', tx['amount'])])
+            updated_transactions.append(updated_transaction)
+        open_transactions = updated_transactions
 
 
 load_data()
 
 
 def save_data():
+    """ Save blockchain + open transactions snapshot to a file. """
     with open('blockchain.txt', mode='w') as f:
-        f.write(str(blockchain))
+        f.write(json.dumps(blockchain))
         f.write('\n')
-        f.write(str(open_transactions))
+        f.write(json.dumps(open_transactions))
 
 
 def valid_proof(transactions, last_hash, proof):
@@ -55,6 +76,7 @@ def valid_proof(transactions, last_hash, proof):
     """
     # Create a string with all the hash inputs
     guess = (str(transactions) + str(last_hash) + str(proof)).encode()
+    print(guess)
     # Hash the string
     # IMPORTANT: This is NOT the same hash as will be stored in the previous_hash. It's a not a block's hash. It's only used for the proof-of-work algorithm.
     guess_hash = hash_string_265(guess)
@@ -87,6 +109,7 @@ def get_balance(participant):
     open_tx_sender = [tx['amount']
                       for tx in open_transactions if tx['sender'] == participant]
     tx_sender.append(open_tx_sender)
+    print(tx_sender)
     # Calculate the total amount of coins sent
     amount_sent = reduce(
         lambda tx_sum, tx_amt: tx_sum +
@@ -153,16 +176,15 @@ def mine_block():
         [('sender', 'MINING'), ('recipient', owner), ('amount', MINING_REWARD)])
     # Copy transaction instead of manipulating the original open_transactions list
     # This ensures that if for some reason the mining should fail, the reward transaction stored in the open transactions
-    copied_transaction = open_transactions[:]
-    copied_transaction.append(reward_transaction)
+    copied_transactions = open_transactions[:]
+    copied_transactions.append(reward_transaction)
     block = {
         'previous_hash': hashed_block,
         'index': len(blockchain),
-        'transactions': copied_transaction,
+        'transactions': copied_transactions,
         'proof': proof
     }
     blockchain.append(block)
-    save_data()
     return True
 
 
@@ -233,6 +255,7 @@ while waiting_for_input:
     elif user_choice == '2':
         if mine_block():
             open_transactions = []
+            save_data()
     elif user_choice == '3':
         print_blockchain_elements()
     elif user_choice == '4':
@@ -252,7 +275,7 @@ while waiting_for_input:
                     {
                         'sender': 'Donald Duck',
                         'recipient': 'John Doe',
-                        'amount': 100
+                        'amount': 100.0
                     }
                 ]
             }
