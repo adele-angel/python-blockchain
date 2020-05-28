@@ -2,6 +2,7 @@
 from functools import reduce
 import hashlib as hl
 import json
+from collections import OrderedDict
 
 # The reward given to miners (for creating a new block)
 MINING_REWARD = 10
@@ -30,7 +31,7 @@ def hash_block(block):
         :block: The block that should be hashed.
     """
     # Create a 64 character hash
-    return hl.sha256(json.dumps(block).encode()).hexdigest()
+    return hl.sha256(json.dumps(block, sort_keys=True).encode()).hexdigest()
 
 
 def valid_proof(transactions, last_hash, proof):
@@ -56,6 +57,7 @@ def proof_of_work():
     last_block = blockchain[-1]
     last_hash = hash_block(last_block)
     proof = 0
+    # Try different proof of work numbers and return the first valid one.
     while not valid_proof(open_transactions, last_hash, proof):
         proof += 1
     return proof
@@ -93,7 +95,7 @@ def get_balance(participant):
 
 
 def get_last_blockchain_value():
-    """ Returns value of the current blockchain """
+    """ Returns value of the current blockchain. """
     if len(blockchain) < 1:
         return None
     return blockchain[-1]
@@ -117,11 +119,8 @@ def add_transaction(recipient, sender=owner,  amount=1.0):
       :recipient: The recipient of the coins.
       :amount: The amount of coins send with the transaction (default = 1.0).
     """
-    transaction = {
-        'sender': sender,
-        'recipient': recipient,
-        'amount': amount
-    }
+    transaction = OrderedDict(
+        [('sender', sender), ('recipient', recipient), ('amount', amount)])
     if verify_transaction(transaction):
         open_transactions.append(transaction)
         participants.add(sender)
@@ -138,11 +137,8 @@ def mine_block():
     hashed_block = hash_block(last_block)
     proof = proof_of_work()
     # Reward transaction to miners
-    reward_transaction = {
-        'sender': 'MINING',
-        'recipient': owner,
-        'amount': MINING_REWARD
-    }
+    reward_transaction = OrderedDict(
+        [('sender', 'MINING'), ('recipient', owner), ('amount', MINING_REWARD)])
     # Copy transaction instead of manipulating the original open_transactions list
     # This ensures that if for some reason the mining should fail, the reward transaction stored in the open transactions
     copied_transaction = open_transactions[:]
