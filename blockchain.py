@@ -1,3 +1,4 @@
+# Imported standard Python libraries
 import functools
 
 # The reward given to miners (for creating a new block)
