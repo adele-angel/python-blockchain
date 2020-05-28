@@ -1,5 +1,7 @@
 # Imported standard Python libraries
 import functools
+import hashlib
+import json
 
 # The reward given to miners (for creating a new block)
 MINING_REWARD = 10
@@ -26,7 +28,8 @@ def hash_block(block):
     Arguments:
         :block: The block that should be hashed.
     """
-    return '-'.join([str(block[key]) for key in block])
+    # Create a 64 character hash
+    return hashlib.sha256(json.dumps(block).encode()).hexdigest()
 
 
 def get_balance(participant):
@@ -76,10 +79,6 @@ def verify_transaction(transaction):
     sender_balance = get_balance(transaction['sender'])
     return sender_balance >= transaction['amount']
 
-# This function accepts two arguments.
-# One required one (transaction_amount) and one optional one (last_transaction)
-# The optional one is optional because it has a default value => [1]
-
 
 def add_transaction(recipient, sender=owner,  amount=1.0):
     """ Append a new value as well as the last blockchin value to the block blockchin
@@ -108,6 +107,7 @@ def mine_block():
     last_block = blockchain[-1]
     # Hash the last block (=> to be able to compare it to the stored hash value)
     hashed_block = hash_block(last_block)
+    print(hashed_block)
     # Miners should be rewarded
     reward_transaction = {
         'sender': 'MINING',
