@@ -2,7 +2,6 @@
 from functools import reduce
 import hashlib as hl
 from collections import OrderedDict
-import json
 import pickle
 
 # Imported functions from hash_util.py file
